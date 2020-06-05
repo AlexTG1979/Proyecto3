@@ -1,0 +1,167 @@
+#include <iostream>
+#include <fstream>
+#include "Fecha.h"
+#include "Reserva.h"
+#include "Material.h"
+#include "Libro.h"
+#include "Disco.h"
+#include "Software.h"
+using namespace std;
+
+int main() 
+{
+  Material* Materiales[30];
+  Reserva Reservas[60];
+  
+  int iIDmaterial;
+  int iIDM;
+  int iIDC;
+  int iIDcliente;
+  int iNum;
+  int iReservacion;
+  int iMaterial;
+  int iA = 0;
+  int iB = 0;
+  int iX;
+  int iDia;
+  int iMes;
+  int iAnio;
+  int iActualizar;
+  string sTituloM;
+  string sAutor;
+  string sSistema;
+  char cMaterial;
+  char cOpcion;
+  bool bReservacion;
+  bool bValor = false;
+  Fecha fInicia, fTermina, fFechaNueva;
+  
+  ifstream ifMaterial;
+  ifMaterial.open("Material.txt");
+
+  while(!ifMaterial.eof()) 
+  {
+    ifMaterial >> iIDmaterial >> sTituloM >> cMaterial;
+
+    if(cMaterial == 'L')
+    {
+      ifMaterial >> iNum >> sAutor;
+      Materiales[iA] = new Libro(iIDmaterial, sTituloM, iNum, sAutor);
+    }
+    else if(cMaterial == 'D')
+    {
+      ifMaterial >> iNum;
+      Materiales[iA] = new Disco(iIDmaterial, sTituloM, iNum);
+    }
+    else if(cMaterial == 'S')
+    {
+      ifMaterial >> sSistema;
+      Materiales[iA] = new Software(iIDmaterial, sTituloM, sSistema);
+    }
+    iA++;
+  }
+
+  ifMaterial.close();
+
+  ifstream ifReserva;
+  ifReserva.open("Reserva.txt");
+
+  while(!ifReserva.eof()) 
+  {
+    ifReserva >> iDia >> iMes >> iAnio >> iIDmaterial >> iIDcliente;
+    Reservas[iB].setIDmaterial(iIDmaterial);
+    Reservas[iB].setIDcliente(iIDcliente);
+    Reservas[iB].setFechaR(Fecha(iDia, iMes, iAnio));
+    iB++;
+  }
+  
+  ifReserva.close();
+  iReservacion = iB;
+
+  cout << "Bienvenido al sistema de reservaciones! " << endl;
+
+  while(cOpcion != 'f')
+  {
+    cout << "a) Consultar lista de materiales" << endl;
+    cout << "b) Consultar lista de reservaciones" << endl;
+    cout << "c) Consultar las reservaciones de un material dado" << endl;
+    cout << "d) Consultar las reservaciones de una fecha dada" << endl;
+    cout << "e) Hacer una reservación" << endl;
+    cout << "f) Terminar" << endl;
+
+    cin >> cOpcion;
+    cout << endl;
+
+    switch(cOpcion)
+    {
+      case 'a': 
+      for(int iX = 0; iX < 30; iX++)
+      {
+        Materiales[iX]->muestraDatos();
+        cout << endl;
+      }
+      break;
+
+      case 'b':
+      iX = 0;
+      while(Reservas[iX].getIDmaterial()!=-1)
+      { 
+        Fecha fInicia = Reservas[iX].getFechaR();
+        cout << "ID del cliente: " << Reservas[iX].getIDcliente() << endl;
+        cout << "El préstamo inicia: " << fInicia << endl;
+        cout << "El préstamo termina: ";
+
+        for(int iY = 0; iY < 30; iY++)
+        {
+          if(Reservas[iX].getIDmaterial() == Materiales[iY]->getID())
+          {
+            Fecha fTermina = Reservas[iX].calculaFechaFinReserva(Materiales[iY]->cantidadDeDiasDePrestamo());
+            cout << fTermina << endl;
+            cout << "Material: " << Materiales[iY]->getTitulo() << endl << endl;
+          }
+        }
+        iX++;
+      }
+      break;
+
+      case 'c': 
+      bReservacion = false;
+      bValor = false;
+
+      while(bValor == false) 
+      {
+        cout << "Ingresa el ID del material: ";
+        cin >> iIDM;
+
+        for(int iX = 0; iX < 30; iX++)
+        {
+          if(iIDM == Materiales[iX]->getID())
+          {
+            bValor = true;
+            iMaterial = iX;
+          }
+        }
+      } 
+
+      for(int iX = 0; iX < 60; iX++)
+      {
+        if(iIDM == Reservas[iX].getIDmaterial())
+        {
+          cout << "Material: " << Materiales[iMaterial]->getTitulo() << endl;
+
+          fInicia = Reservas[iX].getFechaR();
+          cout << "El préstamo inicia: " << fInicia << endl;
+
+          fTermina = Reservas[iX].calculaFechaFinReserva(Materiales[iMaterial]->cantidadDeDiasDePrestamo());
+          cout << "El préstamo termina: " << fTermina << endl << endl;
+
+          bReservacion = true;
+        }
+      }
+
+      if(bReservacion == false)
+      {
+        cout << "No existen reservaciones del material indicado" << endl << endl;
+      }
+
+      break;
